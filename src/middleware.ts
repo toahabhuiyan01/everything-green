@@ -1,4 +1,4 @@
-import { NextResponse, type NextRequest } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import jwt from "jsonwebtoken";
 
 export function middleware(req: NextRequest) {
@@ -29,7 +29,26 @@ export function middleware(req: NextRequest) {
         }
 
         try {
-            jwt.verify(token, jwtSecret);
+            const decoded = jwt.verify(token, jwtSecret) as {
+                userId: string;
+                email: string;
+            };
+
+            const requestHeaders = new Headers(req.headers);
+
+            requestHeaders.set("x-user-id", decoded.userId);
+            requestHeaders.set("x-user-email", decoded.email);
+
+            // Clone the request with the new headers
+            const newRequest = new NextRequest(req.url, {
+                headers: requestHeaders,
+                method: req.method,
+                body: req.body,
+            });
+
+            return NextResponse.next({
+                request: newRequest,
+            });
         } catch (error: unknown) {
             console.error(
                 "Token verification failed:",

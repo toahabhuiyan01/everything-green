@@ -33,29 +33,29 @@ cd everything-green
 
 2. **Install dependencies**
 
-```bash
-npm install
-```
+3. Install dependencies:
 
-3. **Environment Variables**
+# or
+
+yarn install 3. **Environment Variables**
 
 Create a `.env` file in the root directory with the following variables:
 
-```env
-MONGODB_URI=your_mongodb_connection_string
-JWT_SECRET=your_jwt_secret_key
-WEBHOOK_SECRET=your_webhook_secret_key
-```
+3. Set up environment variables:
+   MONGODB_URI=your_mongodb_connection_string
+   JWT_SECRET=your_jwt_secret_key
+   WEBHOOK_SECRET=your_webhook_secret_key
 
+```env
 4. **Run the development server**
 
-```bash
-npm run dev
 ```
 
-## API Endpoints
+````
 
-### Authentication
+-   Generate signatures for webhook payloads
+-   Test webhooks with custom payloads
+-   Verify webhook signatures
 
 #### POST /api/auth/login
 
@@ -64,9 +64,11 @@ npm run dev
     "email": "user@example.com",
     "password": "password123"
 }
-```
+````
 
-### Users
+### Authentication
+
+-   `POST /api/auth/login` - User login
 
 #### POST /api/users (Create User)
 
@@ -88,7 +90,7 @@ npm run dev
 -   Requires Authentication
 -   Returns user details (password excluded)
 
-### Webhooks
+### Users
 
 #### POST /api/webhook
 
@@ -143,7 +145,4 @@ npm run dev
 
 # Run linting
 npm run lint
-
-# Run type checking
-npm run type-check
 ```

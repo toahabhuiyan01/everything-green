@@ -1,15 +1,18 @@
 import axios from "axios";
+import { Chance } from "chance";
 
 const baseURL = process.env.DEV_SERVER_URL || "http://localhost:3000/api";
 let authToken: string;
 let userId: string;
 let secret: string;
 
+const chance = new Chance();
+
 describe("Application Integration Tests", () => {
     const testUser = {
-        name: "Test User",
-        email: "test@example.com",
-        password: "password123",
+        name: chance.name(),
+        email: chance.email(),
+        password: chance.string({ length: 10 }),
     };
 
     describe("1. User Authentication", () => {

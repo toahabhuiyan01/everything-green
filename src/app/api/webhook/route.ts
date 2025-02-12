@@ -1,86 +1,73 @@
 import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
+import dbConnect from "@/lib/db";
 import crypto from "crypto";
-import connectDB from "@/lib/db";
+import Secret from "@/models/Secret";
 import Webhook from "@/models/Webhook";
 
-// Schema for webhook payload validation
-const webhookSchema = z.object({
-    eventType: z.string(),
-    data: z.record(z.unknown()),
-});
+// POST /api/webhook - Process webhook
+export const POST = webhookPost;
 
-// Function to verify webhook signature
-function verifySignature(
-    payload: string,
-    signature: string | null,
-    secret: string
-): boolean {
-    if (!signature) return false;
-
-    const hmac = crypto.createHmac("sha256", secret);
-    const calculatedSignature = hmac.update(payload).digest("hex");
-    return crypto.timingSafeEqual(
-        Buffer.from(signature),
-        Buffer.from(calculatedSignature)
-    );
-}
-
-// Function to store webhook data
-async function storeWebhookData(data: unknown, userId: string) {
-    await connectDB();
-    const webhook = await Webhook.create({
-        userId,
-        eventType: (data as { eventType: string }).eventType,
-        data: (data as { data: Record<string, unknown> }).data,
-    });
-    return webhook;
-}
-
-// POST /api/webhook - Process webhook requests
-export async function POST(request: NextRequest) {
+async function webhookPost(request: NextRequest) {
     try {
-        const webhookSecret = process.env.WEBHOOK_SECRET;
-        if (!webhookSecret) {
-            throw new Error("Webhook secret is not configured");
+        const payload = await request.json();
+        const secret = request.headers.get("x-webhook-secret");
+        await dbConnect();
+
+        const secretDb = await Secret.findOne({ value: secret });
+        if (!secretDb) {
+            return NextResponse.json(
+                { error: "Webhook secret not found" },
+                { status: 500 }
+            );
         }
 
-        const payload = await request.text();
-        const signature = request.headers.get("x-webhook-signature");
+        const incomingSignature = request.headers.get("x-webhook-signature");
+        const timestamp = request.headers.get("x-webhook-timestamp");
 
-        if (!verifySignature(payload, signature, webhookSecret)) {
+        if (!incomingSignature || !timestamp) {
             return NextResponse.json(
-                { error: "Invalid signature" },
+                { error: "Missing webhook signature or timestamp" },
                 { status: 401 }
             );
         }
 
-        const body = JSON.parse(payload);
-        const validatedData = webhookSchema.parse(body);
+        // Verify timestamp is within acceptable range (5 minutes)
+        const currentTime = Math.floor(Date.now() / 1000);
+        const timestampNum = parseInt(timestamp);
 
-        const userId = request.headers.get("x-user-id");
-        if (!userId) {
+        if (isNaN(timestampNum) || Math.abs(currentTime - timestampNum) > 300) {
             return NextResponse.json(
-                { error: "User ID not found in request" },
+                { error: "Invalid timestamp or request expired" },
                 { status: 401 }
             );
         }
 
-        // Store webhook data with user ID
-        await storeWebhookData(validatedData, userId);
+        const hmac = crypto.createHmac("sha256", secret!);
+        const expectedSignature = hmac
+            .update(`${timestamp}.${JSON.stringify(payload)}`)
+            .digest("hex");
+
+        if (incomingSignature !== expectedSignature) {
+            return NextResponse.json(
+                { error: "Invalid webhook signature" },
+                { status: 401 }
+            );
+        }
+
+        const { event, ...rest } = payload;
+        const saved = await Webhook.create({
+            event,
+            data: rest,
+            userId: secretDb.userId,
+        });
 
         return NextResponse.json({
             success: true,
-            message: "Received",
+            message: "Webhook processed successfully",
+            data: saved,
         });
     } catch (error) {
-        if (error instanceof z.ZodError) {
-            return NextResponse.json(
-                { error: error.errors[0].message },
-                { status: 400 }
-            );
-        }
-
+        console.error("Webhook processing error:", error);
         const errorMessage =
             error instanceof Error ? error.message : "Internal server error";
         return NextResponse.json({ error: errorMessage }, { status: 500 });

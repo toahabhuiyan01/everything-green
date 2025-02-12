@@ -1,22 +1,36 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
+import connectDB from "@/lib/db";
+import Secret from "@/models/Secret";
 
 // POST /api/webhook/signature - Generate webhook signature
-export async function POST(request: NextRequest) {
+export const POST = signaturePost;
+
+async function signaturePost(request: NextRequest) {
     try {
-        const webhookSecret = process.env.WEBHOOK_SECRET;
-        if (!webhookSecret) {
-            throw new Error("Webhook secret is not configured");
+        const payload = await request.json();
+        const secret = request.headers.get("x-webhook-secret");
+
+        await connectDB();
+
+        const secretDb = await Secret.findOne({ value: secret });
+        if (!secretDb) {
+            return NextResponse.json(
+                { error: "Webhook secret not found" },
+                { status: 500 }
+            );
         }
 
-        const payload = await request.text();
+        const timestamp = Math.floor(Date.now() / 1000);
 
-        // Generate HMAC SHA-256 signature
-        const hmac = crypto.createHmac("sha256", webhookSecret);
-        const signature = hmac.update(payload).digest("hex");
+        const signature = crypto
+            .createHmac("sha256", secret!)
+            .update(`${timestamp}.${JSON.stringify(payload)}`)
+            .digest("hex");
 
         return NextResponse.json({
             signature,
+            timestamp,
             message: "Signature generated successfully",
         });
     } catch (error) {

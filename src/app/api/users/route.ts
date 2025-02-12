@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import connectDB from "@/lib/db";
 import User from "@/models/User";
+import { withAuth } from "@/lib/authMiddleware";
 
 // Schema for user input validation
 const userSchema = z.object({
@@ -11,7 +12,11 @@ const userSchema = z.object({
 });
 
 // GET /api/users - Fetch all users
-export async function GET() {
+export const GET = withAuth(getUser);
+// POST /api/users - Create a new user
+export const POST = userCreate;
+
+async function getUser() {
     try {
         await connectDB();
         const users = await User.find({}, { password: 0 });
@@ -23,8 +28,7 @@ export async function GET() {
     }
 }
 
-// POST /api/users - Create a new user
-export async function POST(request: NextRequest) {
+async function userCreate(request: NextRequest) {
     try {
         await connectDB();
         const body = await request.json();

@@ -8,7 +8,7 @@ async function dbConnect() {
     const dbUrl = process.env.MONGODB_URL!;
 
     try {
-        const conn = await Moongose.connect(dbUrl, { dbName: "job_search" });
+        const conn = await Moongose.connect(dbUrl, { dbName: "green" });
         console.log(`MongoDB connected: ${conn.connection.host}`);
     } catch (error) {
         console.error(error);

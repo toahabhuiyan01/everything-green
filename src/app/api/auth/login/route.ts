@@ -2,9 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import connectDB from "@/lib/db";
 import User from "@/models/User";
-import { generateToken } from "../../../../middleware";
+import { generateToken } from "@/lib/auth";
 
-// Schema for login input validation
 const loginSchema = z.object({
     email: z.string().email("Invalid email format"),
     password: z.string().min(1, "Password is required"),
@@ -15,11 +14,8 @@ export async function POST(request: NextRequest) {
     try {
         await connectDB();
         const body = await request.json();
-
-        // Validate input
         const validatedData = loginSchema.parse(body);
 
-        // Find user by email
         const user = await User.findByEmail(validatedData.email);
         if (!user) {
             return NextResponse.json(
@@ -28,7 +24,6 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Verify password
         const isPasswordValid = await user.comparePassword(
             validatedData.password
         );
@@ -44,7 +39,6 @@ export async function POST(request: NextRequest) {
             email: user.email,
         });
 
-        // Return user data without password and the token
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { password, ...userWithoutPassword } = user.toObject();
         return NextResponse.json({

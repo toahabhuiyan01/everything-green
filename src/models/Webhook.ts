@@ -3,7 +3,7 @@ import mongoose, { Document, Schema } from "mongoose";
 // Interface for Webhook document
 export interface IWebhook extends Document {
     userId: mongoose.Types.ObjectId;
-    eventType: string;
+    event: string;
     data: Record<string, unknown>;
     createdAt: Date;
     updatedAt: Date;
@@ -18,7 +18,7 @@ const webhookSchema = new Schema<IWebhook>(
             required: true,
             index: true,
         },
-        eventType: {
+        event: {
             type: String,
             required: true,
             index: true,

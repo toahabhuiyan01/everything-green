@@ -1,38 +1,9 @@
 import axios from "axios";
-import mongoose from "mongoose";
-import { MongoMemoryServer } from "mongodb-memory-server";
-import User from "@/models/User";
-import Secret from "@/models/Secret";
-import Webhook from "@/models/Webhook";
 
-let mongoServer: MongoMemoryServer;
 const baseURL = process.env.DEV_SERVER_URL || "http://localhost:3000/api";
 let authToken: string;
 let userId: string;
 let secret: string;
-
-beforeAll(async () => {
-    // Start an in-memory MongoDB instance
-    if (mongoose.connection.readyState !== 0) {
-        await mongoose.disconnect();
-    }
-    mongoServer = await MongoMemoryServer.create();
-    const mongoUri = mongoServer.getUri();
-    await mongoose.connect(mongoUri);
-});
-
-afterAll(async () => {
-    // Clean up and close connections
-    await mongoose.disconnect();
-    await mongoServer.stop();
-});
-
-beforeEach(async () => {
-    // Clear all collections before each test
-    await User.deleteMany({});
-    await Secret.deleteMany({});
-    await Webhook.deleteMany({});
-});
 
 describe("Application Integration Tests", () => {
     const testUser = {

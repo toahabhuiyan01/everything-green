@@ -44,7 +44,7 @@ yarn install
 Create a `.env` file in the root directory with the following variables:
 
 ```env
-MONGODB_URI=your_mongodb_connection_string
+MONGODB_URL=your_mongodb_connection_string
 PRIVATE_KEY=your_jwt_private_key
 PUBLIC_KEY=your_jwt_public_key
 DEV_SERVER_URL=your_dev_server_url

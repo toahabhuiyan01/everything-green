@@ -54,10 +54,10 @@ async function webhookPost(request: NextRequest) {
             );
         }
 
-        const { event, ...rest } = payload;
+        const { event, data } = payload;
         const saved = await Webhook.create({
             event,
-            data: rest,
+            data,
             userId: secretDb.userId,
         });
 

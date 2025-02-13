@@ -62,16 +62,12 @@ The project uses Jest for testing and includes comprehensive integration tests. 
 
 ### Running Tests
 
-First run the dev server is other than `http://localhost:3000/api`, specify that on the `.env` file.
-
-Start your dev server.
+First run the dev server, if it is other than `http://localhost:3000/api`, specify that on the `.env` file.
 
 ```bash
 # Run all tests
 npm run test
 ```
-
-The test suite uses MongoDB Memory Server to run tests against an in-memory database, ensuring consistent and isolated test environments.
 
 ### Test Structure
 
@@ -261,37 +257,3 @@ The server verifies the webhook by:
 3. Creating an HMAC SHA-256 hash using the webhook secret
 4. Comparing the generated hash with the provided signature
 5. Validating the timestamp is within an acceptable time window
-
-### Security Best Practices
-
-1. **Secret Management**
-
-    - Generate strong, unique secrets for each environment
-    - Rotate secrets periodically
-    - Never expose secrets in logs or client-side code
-
-2. **Webhook Verification**
-    - Always verify signatures before processing webhooks
-    - Implement retry logic for failed webhook deliveries
-    - Log webhook events for debugging and auditing
-
-## Error Handling
-
-The API returns appropriate HTTP status codes and error messages:
-
--   200: Success
--   201: Resource created
--   400: Bad request / Invalid input
--   401: Unauthorized
--   404: Resource not found
--   500: Internal server error
-
-## Development
-
-```bash
-# Run development server
-npm run dev
-
-# Run linting
-npm run lint
-```
